@@ -1,0 +1,19 @@
+version: "3.8"
+services:
+  nextjs-app:
+    container_name: bobathon-nextjs-prod-container
+    image: bobathon-nextjs-prod-image
+    build:
+      context: ./nextjs
+      dockerfile: Dockerfile-prod
+    ports:
+      - "3000:3000"
+
+  fastapi-app:
+    container_name: bobathon-fastapi-prod-container
+    image: bobathon-fastapi-prod-image
+    build:
+      context: ./fastapi
+      dockerfile: Dockerfile-prod
+    ports:
+      - "8000:8000"
