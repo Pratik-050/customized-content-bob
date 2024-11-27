@@ -1,8 +1,20 @@
-name: Kanvas Snapshots
-on: # rebuild any PRs and main branch changes
-  pull_request_target:
-    types: [opened, synchronize, reopened]
-
+name: Kanvas Screenshot Service
+'on':
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+  workflow_call:
+    inputs:
+      fileName:
+        description: Relative file path from the root directory
+        required: true
+        type: string
+    outputs:
+      resource_url:
+        description: The URL of the generated resource.
+        value: ${{ jobs.KanvasScreenshot.outputs.resource_url }}
 permissions:
   actions: read
   contents: write
@@ -10,24 +22,26 @@ permissions:
   statuses: write
   pull-requests: write
   id-token: write
-
 jobs:
   KanvasScreenshot:
     runs-on: ubuntu-latest
+    outputs:
+      resource_url: ${{ steps.test_result.outputs.resource_url }}
     steps:
-      - name: Set PR number # To comment the final status on the Pull-request opened in any repository
+      - name: Set PR number
         run: |
           export pull_number=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")
           echo "PULL_NO=$pull_number" >> $GITHUB_ENV
-      - uses: actions/checkout@v3
-      - uses: actions/checkout@v3 #this step would go away
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           path: action
           repository: layer5labs/kanvas-snapshot
       - id: test_result
-        uses: layer5labs/kanvas-snapshot@v0.2.15
+        uses: layer5labs/kanvas-snapshot@v0.2.18
         with:
-          githubToken:
-          providerToken:
-          prNumber:
-          application_type: Kubernetes Manifest # your application type, could be any of three: "Kubernetes Manifest", "Docker Compose", "Helm Chart"
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          mesheryToken: ${{ secrets.MESHERY_TOKEN }}
+          prNumber: ${{ env.PULL_NO }}
+          application_type: Kubernetes Manifest
+          filePath: ${{ inputs.fileName == '' && 'docker-compose-prod.yml' || inputs.fileName }}
